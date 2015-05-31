@@ -772,7 +772,7 @@ example:
      },
  };
 
-You can use completion your command-line program:
+You can use completion in your command-line program:
 
  % del-user --username <tab>
  % del-user <tab> ; # since the 'username' argument has pos=0
