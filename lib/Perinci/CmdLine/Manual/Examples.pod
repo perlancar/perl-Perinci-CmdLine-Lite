@@ -730,7 +730,7 @@ TODO
 =head2 REMOTE FUNCTION
 
 
-=head1 COMPLETION
+=head1 SHELL TAB COMPLETION
 
 =head2 Custom completion
 
@@ -802,9 +802,6 @@ L<App::CompleteUtils> module.
 =head2 Modifying common options
 
 =head2 Customizing help message
-
-=head2 Shell tab completion
-
 
 =head2 Dealing with binary data
 
