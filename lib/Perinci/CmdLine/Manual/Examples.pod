@@ -785,8 +785,14 @@ debugging information:
 
  % COMP_LINE='myprog --arg x' COMP_POINT=13 PERL5OPT=-MLog::Any::App TRACE=1 myprog --arg x
 
-XXX mention about C<testcomp>.
+You can also use the L<testcomp|https://metacpan.org/pod/testcomp> utility to
+help debug your custom completion:
 
+ % testcomp myprog --arg x^
+
+Place the C<^> caret character to simulate the position of the cursor when
+tab-completion is attempted. C<testcomp> is installed with the
+L<App::CompleteUtils> module.
 
 =head2 I18N
 
