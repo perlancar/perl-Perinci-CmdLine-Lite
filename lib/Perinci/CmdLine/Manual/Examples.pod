@@ -730,7 +730,7 @@ TODO
 =head2 REMOTE FUNCTION
 
 
-=head1 COMPLETION
+=head1 SHELL TAB COMPLETION
 
 =head2 Custom completion
 
@@ -772,7 +772,7 @@ example:
      },
  };
 
-You can use completion your command-line program:
+You can use completion in your command-line program:
 
  % del-user --username <tab>
  % del-user <tab> ; # since the 'username' argument has pos=0
@@ -785,8 +785,14 @@ debugging information:
 
  % COMP_LINE='myprog --arg x' COMP_POINT=13 PERL5OPT=-MLog::Any::App TRACE=1 myprog --arg x
 
-XXX mention about C<testcomp>.
+You can also use the L<testcomp|https://metacpan.org/pod/testcomp> utility to
+help debug your custom completion:
 
+ % testcomp myprog --arg x^
+
+Place the C<^> caret character to simulate the position of the cursor when
+tab-completion is attempted. C<testcomp> is installed with the
+L<App::CompleteUtils> module.
 
 =head2 I18N
 
@@ -796,9 +802,6 @@ XXX mention about C<testcomp>.
 =head2 Modifying common options
 
 =head2 Customizing help message
-
-=head2 Shell tab completion
-
 
 =head2 Dealing with binary data
 
