@@ -458,6 +458,9 @@ sub _detect_completion {
     } elsif ($ENV{COMMAND_LINE}) {
         $r->{shell} = 'tcsh';
         return 1;
+    } elsif (grep {"--d4e237b2184b5bb3-fishcomparg"} @ARGV) {
+        $r->{shell} = 'fish';
+        return 1;
     }
 
     $r->{shell} //= 'bash';
@@ -481,8 +484,8 @@ sub _read_env {
         require Complete::Bash;
         ($words, undef) = @{ Complete::Bash::parse_cmdline($env, 0) };
     } elsif ($r->{shell} eq 'fish') {
-        require Complete::Fish;
-        ($words, undef) = @{ Complete::Fish::parse_cmdline($env) };
+        require Complete::Bash;
+        ($words, undef) = @{ Complete::Bash::parse_cmdline($env) };
     } elsif ($r->{shell} eq 'tcsh') {
         require Complete::Tcsh;
         ($words, undef) = @{ Complete::Tcsh::parse_cmdline($env) };
@@ -501,6 +504,8 @@ sub do_completion {
 
     local $r->{in_completion} = 1;
 
+    my $compres;
+
     my ($words, $cword);
     if ($r->{shell} eq 'bash') {
         require Complete::Bash;
@@ -510,7 +515,24 @@ sub do_completion {
         $words = [map {Encode::decode('UTF-8', $_)} @$words];
     } elsif ($r->{shell} eq 'fish') {
         require Complete::Fish;
-        ($words, $cword) = @{ Complete::Fish::parse_cmdline() };
+        # we don't parse something like COMP_LINE or COMMAND_LINE in fish.
+        # instead, here's how we do completion in fish. during setup on fish
+        # side, we add completion rule for each option and argument via the
+        # 'complete' command, e.g.:
+        #
+        # % complete -c myprog -l my-opt "myprog --d4e237b2184b5bb3-fishcomparg my_opt"
+        #
+        # on our program's side, when we receive a special option
+        # --d4e237b2184b5bb3-fishcomparg, we produce completion response for
+        # fish then exit.
+        for my $i (0..$#ARGV) {
+            if ($ARGV[$i] eq '--d4e237b2184b5bb3-fishcomparg' && $i < $#ARGV) {
+                require Perinci::Sub::Complete;
+                Perinci::Sub::Complete::complete_arg_val(
+                    arg => $ARGV[$i+1], args=>{},
+                );
+            }
+        }
     } elsif ($r->{shell} eq 'tcsh') {
         require Complete::Tcsh;
         ($words, $cword) = @{ Complete::Tcsh::parse_cmdline() };
@@ -550,7 +572,7 @@ sub do_completion {
     my $subcommand_name_from = $r->{subcommand_name_from} // '';
 
     require Perinci::Sub::Complete;
-    my $compres = Perinci::Sub::Complete::complete_cli_arg(
+    $compres = Perinci::Sub::Complete::complete_cli_arg(
         meta            => $meta, # must be normalized
         words           => $words,
         cword           => $cword,
@@ -585,6 +607,7 @@ sub do_completion {
         },
     );
 
+  FORMAT_COMP_RES:
     my $formatted;
     if ($r->{shell} eq 'bash') {
         $formatted = Complete::Bash::format_completion(
