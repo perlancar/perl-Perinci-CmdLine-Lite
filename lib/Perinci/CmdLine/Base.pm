@@ -112,7 +112,8 @@ has default_dry_run => (
 # we put common stuffs here, but PC::Classic's final version will differ from
 # PC::Lite's in several aspects: translation, supported output formats,
 # PC::Classic currently adds some extra keys, some options are not added by
-# PC::Lite (e.g. history/undo stuffs).
+# PC::Lite (e.g. history/undo stuffs). we should probably merge this together to
+# avoid duplicated code.
 our %copts = (
 
     version => {
@@ -372,6 +373,24 @@ _
     },
 
 );
+
+# these options are added when they don't clash with any argument option
+our %additional_copts;
+$additional_copts{profile} = { %{ $copts{config_profile} } }; # shallow copy
+$additional_copts{profile}{getopt} = 'profile=s';
+for my $name (qw/text text_pretty pretty text_plain json_pretty csv/) {
+    (my $format = $name) =~ s/_/-/g; $format = "text-pretty" if $name eq 'pretty';
+    (my $getopt = $name) =~ s/_/-/g;
+    $additional_copts{$name} = {
+        getopt  => $getopt,
+        summary => "Set output format to $format",
+        handler => sub {
+            my ($go, $val, $r) = @_;
+            $r->{format} = $format;
+        },
+        tags => ['category:output'],
+    },
+}
 
 sub __default_env_name {
     my ($prog) = @_;

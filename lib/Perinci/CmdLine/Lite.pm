@@ -369,6 +369,16 @@ sub hook_after_get_meta {
         };
     }
 
+    # add some additional option when they don't clash with argument options.
+    {
+        for my $k (keys %Perinci::CmdLine::Base::additional_copts) {
+            my $v = $Perinci::CmdLine::Base::additional_copts{$k};
+            unless ($r->{meta}{args} && $r->{meta}{args}{$k}) {
+                $self->common_opts->{$k} = { %$v };
+            }
+        }
+    }
+
     # check deps property. XXX this should be done only when we don't wrap
     # subroutine, because Perinci::Sub::Wrapper already checks the deps
     # property.
