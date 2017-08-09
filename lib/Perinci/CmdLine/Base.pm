@@ -782,8 +782,8 @@ sub _parse_argv1 {
         # one small downside for this is that we cannot do autoabbrev here,
         # because we're not yet specifying all options here.
 
-        require Getopt::Long;
-        my $old_go_conf = Getopt::Long::Configure(
+        require Getopt::Long::EvenLess;
+        my $old_go_conf = Getopt::Long::EvenLess::Configure(
             'pass_through', 'no_ignore_case', 'no_auto_abbrev',
             'no_getopt_compat', 'gnu_compat', 'bundling');
         my $co = $self->common_opts // {};
@@ -794,8 +794,8 @@ sub _parse_argv1 {
             };
         }
         #log_trace("\@ARGV before parsing common opts: %s", \@ARGV);
-        Getopt::Long::GetOptions(@go_spec);
-        Getopt::Long::Configure($old_go_conf);
+        Getopt::Long::EvenLess::GetOptions(@go_spec);
+        Getopt::Long::EvenLess::Configure($old_go_conf);
         #log_trace("\@ARGV after  parsing common opts: %s", \@ARGV);
     }
 
@@ -1614,16 +1614,16 @@ and so on.
 We then perform a C<meta> Riap request to the URL to get the Rinci metadata.
 After that, C<hook_after_get_meta> is run if provided. From the Rinci metadata
 we get list of arguments (the C<args> property). From this, we generate a spec
-of command-line options to feed to L<Getopt::Long>. There are some conversions
-being done, e.g. an argument called C<foo_bar> will become command-line option
-C<--foo-bar>. Command-line aliases from metadata are also added to the
-C<Getopt::Long> spec.
+of command-line options to feed to L<Getopt::Long::EvenLess>. There are some
+conversions being done, e.g. an argument called C<foo_bar> will become
+command-line option C<--foo-bar>. Command-line aliases from metadata are also
+added to the C<Getopt::Long> spec.
 
 It is also at this step that we read config file (if C<read_config> attribute is
 true). We run C<hook_before_read_config_file> first. Some ideas to do in this
 hook: setting default config profile.
 
-We then pass the spec to C<Getopt::Long::GetOptions>, we get function arguments.
+We then pass the spec to C<Getopt::Long::EvenLess::GetOptions>, we get function arguments.
 
 We then run C<hook_after_parse_argv>. Some ideas to do in this hook: XXX.
 
