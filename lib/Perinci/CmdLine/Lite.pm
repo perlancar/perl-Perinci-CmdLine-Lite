@@ -445,7 +445,7 @@ sub action_subcommands {
 }
 
 sub action_version {
-    no strict 'refs';
+    no strict 'refs';  ## no critic
 
     my ($self, $r) = @_;
 
