@@ -28,7 +28,7 @@ sub __array_iter {
         if ($i < @$ary) {
             return $ary->[$i++];
         } else {
-            return undef;
+            return undef;  ## no critic
         }
     };
 }
@@ -295,7 +295,7 @@ _
             # we are not called from cmdline, bail (actually we might want to
             # return list of programs anyway, but we want to read the value of
             # bash_global_dir et al)
-            return undef unless $cmdline;
+            return undef unless $cmdline;  ## no critic
 
             # since this is common option, at this point we haven't parsed
             # argument or even read config file. let's parse argv first (argv
@@ -441,7 +441,7 @@ sub get_subcommand_data {
     my ($self, $name) = @_;
 
     my $scs = $self->subcommands;
-    return undef unless $scs;
+    return undef unless $scs;  ## no critic
 
     if (ref($scs) eq 'CODE') {
         return $scs->($self, name=>$name);
@@ -645,7 +645,7 @@ sub do_completion {
             }
 
             # otherwise let periscomp do its thing
-            return undef;
+            return undef;  ## no critic
         },
     );
 
@@ -1102,10 +1102,10 @@ sub __gen_iter {
             local $/ = \(64*1024) if $type eq 'buf';
 
             state $eof;
-            return undef if $eof;
+            return undef if $eof;  ## no critic
             my $l = <$fh>;
             unless (defined $l) {
-                $eof++; return undef;
+                $eof++; return undef;  ## no critic
             }
             chomp($l) if $chomp;
             $l;
@@ -1117,11 +1117,11 @@ sub __gen_iter {
         my $i = -1;
         return sub {
             state $eof;
-            return undef if $eof;
+            return undef if $eof;  ## no critic
             $i++;
             my $l = <$fh>;
             unless (defined $l) {
-                $eof++; return undef;
+                $eof++; return undef;  ## no critic
             }
             eval { $l = $json->decode($l) };
             if ($@) {
