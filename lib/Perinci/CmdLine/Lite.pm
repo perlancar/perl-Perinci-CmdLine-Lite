@@ -7,6 +7,7 @@ use 5.010001;
 # use strict; # already enabled by Mo
 # use warnings; # already enabled by Mo
 use Log::ger;
+use IO::Interactive qw(is_interactive);
 
 use List::Util qw(first);
 use Mo qw(build default);
@@ -103,7 +104,7 @@ my $setup_progress;
 sub _setup_progress_output {
     my $self = shift;
 
-    return unless $ENV{PROGRESS} // (-t STDOUT);
+    return unless $ENV{PROGRESS} // (is_interactive(*STDOUT));
 
     require Progress::Any::Output;
     Progress::Any::Output->set("TermProgressBarColor");
