@@ -709,7 +709,7 @@ sub _read_config {
     }
 }
 
-sub __min(@) {
+sub __min(@) {  ## no critic
     my $m = $_[0];
     for (@_) {
         $m = $_ if $_ < $m;
