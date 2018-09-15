@@ -1,8 +1,5 @@
 package Perinci::CmdLine::Lite;
 
-# DATE
-# VERSION
-
 use 5.010001;
 # use strict; # already enabled by Mo
 # use warnings; # already enabled by Mo
@@ -12,6 +9,9 @@ use List::Util qw(first);
 use Mo qw(build default);
 #use Moo;
 extends 'Perinci::CmdLine::Base';
+
+# DATE
+# VERSION
 
 # when debugging, use this instead of the above because Mo doesn't give clear
 # error message if base class has errors.
