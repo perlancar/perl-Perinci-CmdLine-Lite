@@ -7,6 +7,7 @@ use 5.010001;
 use strict;
 use warnings;
 use Log::ger;
+use IO::Interactive qw(is_interactive);
 
 # this class can actually be a role instead of base class for pericmd &
 # pericmd-lite, but Mo is more lightweight than Role::Tiny (also R::T doesn't
@@ -28,7 +29,7 @@ sub __array_iter {
         if ($i < @$ary) {
             return $ary->[$i++];
         } else {
-            return undef;
+            return undef;  ## no critic
         }
     };
 }
@@ -177,7 +178,7 @@ our %copts = (
         summary => 'Set output format to json',
         handler => sub {
             my ($go, $val, $r) = @_;
-            $r->{format} = (-t STDOUT) ? 'json-pretty' : 'json';
+            $r->{format} = (is_interactive(*STDOUT)) ? 'json-pretty' : 'json';
         },
         tags => ['category:output'],
     },
@@ -295,7 +296,7 @@ _
             # we are not called from cmdline, bail (actually we might want to
             # return list of programs anyway, but we want to read the value of
             # bash_global_dir et al)
-            return undef unless $cmdline;
+            return undef unless $cmdline;  ## no critic
 
             # since this is common option, at this point we haven't parsed
             # argument or even read config file. let's parse argv first (argv
@@ -441,7 +442,7 @@ sub get_subcommand_data {
     my ($self, $name) = @_;
 
     my $scs = $self->subcommands;
-    return undef unless $scs;
+    return undef unless $scs;  ## no critic
 
     if (ref($scs) eq 'CODE') {
         return $scs->($self, name=>$name);
@@ -645,7 +646,7 @@ sub do_completion {
             }
 
             # otherwise let periscomp do its thing
-            return undef;
+            return undef;  ## no critic
         },
     );
 
@@ -709,7 +710,7 @@ sub _read_config {
     }
 }
 
-sub __min(@) {
+sub __min(@) {  ## no critic
     my $m = $_[0];
     for (@_) {
         $m = $_ if $_ < $m;
@@ -1028,7 +1029,7 @@ sub _parse_argv2 {
                 my $src = $as->{cmdline_src} // '';
 
                 # we only get from stdin if stdin is piped
-                $src = '' if $src eq 'stdin_or_args' && -t STDIN;
+                $src = '' if $src eq 'stdin_or_args' && is_interactive(*STDIN);
 
                 if ($src && $as->{req}) {
                     # don't complain, we will fill argument from other source
@@ -1102,10 +1103,10 @@ sub __gen_iter {
             local $/ = \(64*1024) if $type eq 'buf';
 
             state $eof;
-            return undef if $eof;
+            return undef if $eof;  ## no critic
             my $l = <$fh>;
             unless (defined $l) {
-                $eof++; return undef;
+                $eof++; return undef;  ## no critic
             }
             chomp($l) if $chomp;
             $l;
@@ -1117,11 +1118,11 @@ sub __gen_iter {
         my $i = -1;
         return sub {
             state $eof;
-            return undef if $eof;
+            return undef if $eof;  ## no critic
             $i++;
             my $l = <$fh>;
             unless (defined $l) {
-                $eof++; return undef;
+                $eof++; return undef;  ## no critic
             }
             eval { $l = $json->decode($l) };
             if ($@) {
@@ -1197,7 +1198,7 @@ sub parse_cmdline_src {
                     my $prompt = Perinci::Object::rimeta($as)->langprop('cmdline_prompt') //
                         sprintf($self->default_prompt_template, $an);
                     print $prompt;
-                    my $iactive = (-t STDOUT);
+                    my $iactive = (is_interactive(*STDOUT));
                     Term::ReadKey::ReadMode('noecho')
                           if $term_readkey_available && $iactive && $as->{is_password};
                     chomp($r->{args}{$an} = <STDIN>);
@@ -1242,7 +1243,7 @@ sub parse_cmdline_src {
                             $is_ary ? [<>] :
                                 do {local $/; ~~<>};
                     $r->{args}{"-cmdline_src_$an"} = $src;
-                } elsif ($src eq 'stdin_or_args' && !(-t STDIN)) {
+                } elsif ($src eq 'stdin_or_args' && !(is_interactive(*STDIN))) {
                     unless (defined($r->{args}{$an})) {
                         $r->{args}{$an} = $do_stream ?
                             __gen_iter(\*STDIN, $as, $an) :
@@ -1335,7 +1336,7 @@ sub select_output_handle {
             last unless $pager; # ENV{PAGER} can be set 0/'' to disable paging
             #log_trace("Paging output using %s", $pager);
             ## no critic (InputOutput::RequireBriefOpen)
-            open $handle, "| $pager";
+            open $handle, "|-", $pager;
         }
         $handle //= \*STDOUT;
     }
@@ -1499,7 +1500,7 @@ sub run {
     # EXPERIMENTAL, set default format to json if we are running in a pipeline
     # and the right side of the pipe is the 'td' program
     {
-        last if (-t STDOUT) || $r->{format};
+        last if (is_interactive(*STDOUT)) || $r->{format};
         last unless eval { require Pipe::Find; 1 };
         my $pipeinfo = Pipe::Find::get_stdout_pipe_process();
         last unless $pipeinfo;
