@@ -718,29 +718,24 @@ sub _plugin_activate_plugins {
     }
 }
 
-my $has_read_env;
+my $has_read_plugins_env;
 sub _plugin_activate_plugins_in_env {
     my $self = shift;
 
-    last if $has_read_env;
+    last if $has_read_plugins_env;
 
   READ_PERINCI_CMDLINE_PLUGINS:
     {
-        last unless defined $ENV{PERINCI_CMDLINE_PLUGINS};
+        my $env = $ENV{PERINCI_CMDLINE_PLUGINS};
+        last unless defined $env;
         log_trace "[pericmd] Reading env variable PERINCI_CMDLINE_PLUGINS ...";
-        $self->_plugin_activate_plugins($self->_plugin_unflatten_import($ENV{PERINCI_CMDLINE_PLUGINS}, "PERINCI_CMDLINE_PLUGINS"));
-        $has_read_env++;
-        return;
-    }
-
-  READ_PERINCI_CMDLINE_PLUGINS_JSON:
-    {
-        last unless defined $ENV{PERINCI_CMDLINE_JSON};
-        require JSON::PP;
-        log_trace "[pericmd] Reading env variable PERINCI_CMDLINE_PLUGINS_JSON ...";
-        my $imports = JSON::PP::decode_json($ENV{PERINCI_CMDLINE_PLUGINS_JSON});
-        $self->_plugin_active_plugins(@$imports);
-        $has_read_env++;
+        if ($env =~ /\A\[/) {
+            my $imports = JSON::PP::decode_json($env);
+            $self->_plugin_active_plugins(@$imports);
+        } else {
+            $self->_plugin_activate_plugins($self->_plugin_unflatten_import($env, "PERINCI_CMDLINE_PLUGINS"));
+        }
+        $has_read_plugins_env++;
         return;
     }
 }
@@ -3060,22 +3055,17 @@ result.
 
 =head2 PERINCI_CMDLINE_PLUGINS
 
-String. A list of plugins to load at the start of program. Format:
+String. A list of plugins to load at the start of program. If it begins with a
+C>[> (opening square bracket), it will be assumed to be in JSON encoding:
+
+ ["PluginName1",{"arg1name":"arg1val","arg2name":"arg2val",...},"PluginName2", ...]
+
+otherwise it is assumed to be a comma-separated string in this syntax:
 
  -PluginName1,arg1name,arg1val,arg2name,arg2val,...,-PluginName2,...
 
 Plugin name is module name without the C<Perinci::CmdLine::Plugin::> prefix. The
 argument list can be skipped if you don't want to pass arguments to a plugin.
-
-=head2 PERINCI_CMDLINE_PLUGINS_JSON
-
-String. Like L</PERINCI_CMDLINE_PLUGINS> but assumed to be in JSON encoding, to
-be able to encode data structure (for complex arguments). Syntax:
-
- ["PluginName1",{"arg1name":"arg1val","arg2name":"arg2val",...},"PluginName2", ...]
-
-Plugin name is module name without the C<Perinci::CmdLine::Plugin::> prefix. The
-hash can be skipped if you don't want to pass arguments to a plugin.
 
 =head2 PERINCI_CMDLINE_PROGRAM_NAME
 
