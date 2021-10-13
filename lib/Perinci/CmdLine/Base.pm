@@ -875,75 +875,6 @@ sub _read_env {
     $words;
 }
 
-sub do_dump_object {
-    require Data::Dump;
-
-    my ($self, $r) = @_;
-
-    local $r->{in_dump_object} = 1;
-
-    # check whether subcommand is defined. try to search from --cmd, first
-    # command-line argument, or default_subcommand.
-    $self->hook_before_parse_argv($r);
-    $self->_parse_argv1($r);
-
-    if ($r->{read_env}) {
-        my $env_words = $self->_read_env($r);
-        unshift @ARGV, @$env_words;
-    }
-
-    my $scd = $r->{subcommand_data};
-    # we do get_meta() currently because some common option like dry_run is
-    # added in hook_after_get_meta().
-    my $meta = $self->get_meta($r, $scd->{url} // $self->{url});
-
-    # additional information, because scripts often put their metadata in 'main'
-    # package
-    {
-        no warnings 'once';
-        $self->{'x.main.spec'} = \%main::SPEC;
-    }
-
-    my $label = $ENV{PERINCI_CMDLINE_DUMP_OBJECT} //
-        $ENV{PERINCI_CMDLINE_DUMP}; # old name that will be removed
-    my $dump = join(
-        "",
-        "# BEGIN DUMP $label\n",
-        Data::Dump::dump($self), "\n",
-        "# END DUMP $label\n",
-    );
-
-    [200, "OK", $dump,
-     {
-         stream => 0,
-         "cmdline.skip_format" => 1,
-     }];
-}
-
-sub do_dump_args {
-    require Data::Dump;
-
-    my ($self, $r) = @_;
-
-    [200, "OK", Data::Dump::dump($r->{args}) . "\n",
-     {
-         stream => 0,
-         "cmdline.skip_format" => 1,
-     }];
-}
-
-sub do_dump_config {
-    require Data::Dump;
-
-    my ($self, $r) = @_;
-
-    [200, "OK", Data::Dump::dump($r->{config}) . "\n",
-     {
-         stream => 0,
-         "cmdline.skip_format" => 1,
-     }];
-}
-
 sub do_completion {
     my ($self, $r) = @_;
 
@@ -2745,10 +2676,6 @@ from command-line options like C<--log-level>, C<--trace>, etc.
 The main method to run your application. See L</"PROGRAM FLOW (NORMAL)"> for
 more details on what this method does.
 
-=head2 $cmd->do_dump() => ENVRES
-
-Called by run().
-
 =head2 $cmd->do_completion() => ENVRES
 
 Called by run().
@@ -2759,8 +2686,7 @@ Called by run().
 
 =head2 $cmd->get_meta($r, $url) => ENVRES
 
-Called by parse_argv() or do_dump() or do_completion(). Subclass has to
-implement this.
+Called by parse_argv() or do_completion(). Subclass has to implement this.
 
 
 =head1 HOOKS
@@ -3000,41 +2926,6 @@ String. Like in other programs, can be set to select the pager program (when
 C<cmdline.page_result> result metadata is active). Can also be set to C<''> or
 C<0> to explicitly disable paging even though C<cmd.page_result> result metadata
 is active.
-
-=head2 PERINCI_CMDLINE_DUMP_ARGS
-
-Boolean. If set to true, instead of running normal action, will instead dump
-arguments that will be passed to function, (after merge with values from
-environment/config files, and validation/coercion), in Perl format (using
-L<Data::Dump>) and exit.
-
-Useful for debugging or information extraction.
-
-=head2 PERINCI_CMDLINE_DUMP_CONFIG
-
-Boolean. If set to true, instead of running normal action, will dump
-configuration that is using C<read_config()>, in Perl format (using
-L<Data::Dump>) and exit.
-
-Useful for debugging or information extraction.
-
-=head2 PERINCI_CMDLINE_DUMP_OBJECT
-
-String. Default undef. If set to a true value, instead of running normal action,
-will dump Perinci::CmdLine object at the start of run() in Perl format (using
-L<Data::Dump>) and exit. Useful to get object's attributes and reconstruct the
-object later. Used in, e.g. L<App::shcompgen> to generate an appropriate
-completion script for the CLI, or L<Pod::Weaver::Plugin::Rinci> to generate POD
-documentation about the script. See also L<Perinci::CmdLine::Dump>.
-
-The value of the this variable will be used as the label in the dump delimiter,
-.e.g:
-
- # BEGIN DUMP foo
- ...
- # END DUMP foo
-
-Useful for debugging or information extraction.
 
 =head2 PERINCI_CMDLINE_OUTPUT_DIR
 

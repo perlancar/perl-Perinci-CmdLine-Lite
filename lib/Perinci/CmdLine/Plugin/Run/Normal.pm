@@ -33,14 +33,6 @@ _
 sub on_run {
     my ($self, $r) = @_;
 
-    # dump object is special case, we delegate to do_dump_object()
-    if ($ENV{PERINCI_CMDLINE_DUMP_OBJECT} //
-        $ENV{PERINCI_CMDLINE_DUMP} # old name that will be removed
-    ) {
-        $r->{res} = $self->cmdline->do_dump_object($r);
-        goto FORMAT;
-    }
-
     # completion is special case, we delegate to do_completion()
     if ($self->cmdline->_detect_completion($r)) {
         $r->{res} = $self->cmdline->do_completion($r);
@@ -115,12 +107,6 @@ sub on_run {
         log_trace("[pericmd] Running hook_after_parse_argv ...");
         $self->cmdline->hook_after_parse_argv($r);
 
-        if ($ENV{PERINCI_CMDLINE_DUMP_CONFIG}) {
-            log_trace "[pericmd] Dumping config ...";
-            $r->{res} = $self->cmdline->do_dump_config($r);
-            goto FORMAT;
-        }
-
         $self->cmdline->parse_cmdline_src($r);
 
         #log_trace("TMP: parse_res: %s", $parse_res);
@@ -140,11 +126,6 @@ sub on_run {
 
         my $meth = "action_$r->{action}";
         die [500, "Unknown action $r->{action}"] unless $self->cmdline->can($meth);
-        if ($ENV{PERINCI_CMDLINE_DUMP_ARGS}) {
-            log_trace "[pericmd] Dumping arguments ...";
-            $r->{res} = $self->cmdline->do_dump_args($r);
-            goto FORMAT;
-        }
         log_trace("[pericmd] Running %s() ...", $meth);
         $self->cmdline->_plugin_run_event(
             name => 'action',
