@@ -2,8 +2,8 @@ package Perinci::CmdLine::Lite;
 
 # put pragmas + Log::ger here
 use 5.010001;
-# use strict; # already enabled by Mo
-# use warnings; # already enabled by Mo
+# use strict; # already enabled by Moo
+# use warnings; # already enabled by Moo
 use Log::ger;
 
 # put other modules alphabetically here
@@ -19,10 +19,6 @@ extends 'Perinci::CmdLine::Base';
 # DATE
 # DIST
 # VERSION
-
-# when debugging, use this instead of the above because Mo doesn't give clear
-# error message if base class has errors.
-#use parent 'Perinci::CmdLine::Base';
 
 has default_prompt_template => (
     is=>'rw',

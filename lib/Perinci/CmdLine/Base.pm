@@ -16,9 +16,8 @@ use IO::Interactive qw(is_interactive);
 # DIST
 # VERSION
 
-# this class can actually be a role instead of base class for pericmd &
-# pericmd-lite, but Mo is more lightweight than Role::Tiny (also R::T doesn't
-# have attributes), Role::Basic, or Moo::Role.
+# TODO: this class can actually be a role instead of base class for pericmd &
+# pericmd-lite.
 
 use Moo;
 
