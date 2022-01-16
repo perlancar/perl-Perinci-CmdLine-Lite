@@ -718,29 +718,24 @@ sub _plugin_activate_plugins {
     }
 }
 
-my $has_read_env;
+my $has_read_plugins_env;
 sub _plugin_activate_plugins_in_env {
     my $self = shift;
 
-    last if $has_read_env;
+    last if $has_read_plugins_env;
 
   READ_PERINCI_CMDLINE_PLUGINS:
     {
-        last unless defined $ENV{PERINCI_CMDLINE_PLUGINS};
+        my $env = $ENV{PERINCI_CMDLINE_PLUGINS};
+        last unless defined $env;
         log_trace "[pericmd] Reading env variable PERINCI_CMDLINE_PLUGINS ...";
-        $self->_plugin_activate_plugins($self->_plugin_unflatten_import($ENV{PERINCI_CMDLINE_PLUGINS}, "PERINCI_CMDLINE_PLUGINS"));
-        $has_read_env++;
-        return;
-    }
-
-  READ_PERINCI_CMDLINE_PLUGINS_JSON:
-    {
-        last unless defined $ENV{PERINCI_CMDLINE_JSON};
-        require JSON::PP;
-        log_trace "[pericmd] Reading env variable PERINCI_CMDLINE_PLUGINS_JSON ...";
-        my $imports = JSON::PP::decode_json($ENV{PERINCI_CMDLINE_PLUGINS_JSON});
-        $self->_plugin_active_plugins(@$imports);
-        $has_read_env++;
+        if ($env =~ /\A\[/) {
+            my $imports = JSON::PP::decode_json($env);
+            $self->_plugin_active_plugins(@$imports);
+        } else {
+            $self->_plugin_activate_plugins($self->_plugin_unflatten_import($env, "PERINCI_CMDLINE_PLUGINS"));
+        }
+        $has_read_plugins_env++;
         return;
     }
 }
@@ -857,6 +852,129 @@ sub _read_env {
     my @words = Text::ParseWords::shellwords($env);
     log_trace("[pericmd] Words from env: %s", \@words);
     \@words;
+}
+
+sub do_completion {
+    my ($self, $r) = @_;
+
+    local $r->{in_completion} = 1;
+
+    my ($words, $cword);
+    if ($r->{shell} eq 'bash') {
+        require Complete::Bash;
+        require Encode;
+        ($words, $cword) = @{ Complete::Bash::parse_cmdline(undef, undef, {truncate_current_word=>1}) };
+        ($words, $cword) = @{ Complete::Bash::join_wordbreak_words($words, $cword) };
+        $words = [map {Encode::decode('UTF-8', $_)} @$words];
+    } elsif ($r->{shell} eq 'fish') {
+        require Complete::Bash;
+        ($words, $cword) = @{ Complete::Bash::parse_cmdline() };
+    } elsif ($r->{shell} eq 'tcsh') {
+        require Complete::Tcsh;
+        ($words, $cword) = @{ Complete::Tcsh::parse_cmdline() };
+    } elsif ($r->{shell} eq 'zsh') {
+        require Complete::Bash;
+        ($words, $cword) = @{ Complete::Bash::parse_cmdline() };
+    } else {
+        die "Unsupported shell '$r->{shell}'";
+    }
+
+    shift @$words; $cword--; # strip program name
+
+    # @ARGV given by bash is messed up / different. during completion, we
+    # get ARGV from parsing COMP_LINE/COMP_POINT.
+    @ARGV = @$words;
+
+    # check whether subcommand is defined. try to search from --cmd, first
+    # command-line argument, or default_subcommand.
+    $self->hook_before_parse_argv($r);
+    $self->_parse_argv1($r);
+
+    if ($r->{read_env}) {
+        my $env_words = $self->_read_env($r);
+        unshift @ARGV, @$env_words;
+        $cword += @$env_words;
+    }
+
+    #log_trace("ARGV=%s", \@ARGV);
+    #log_trace("words=%s", $words);
+
+    # force format to text for completion, because user might type 'cmd --format
+    # blah -^'.
+    $r->{format} = 'text';
+
+    my $scd = $r->{subcommand_data};
+    my $meta = $self->get_meta($r, $scd->{url} // $self->{url});
+
+    my $subcommand_name_from = $r->{subcommand_name_from} // '';
+
+    require Perinci::Sub::Complete;
+    my $compres = Perinci::Sub::Complete::complete_cli_arg(
+        meta            => $meta, # must be normalized
+        words           => $words,
+        cword           => $cword,
+        common_opts     => $self->common_opts,
+        riap_server_url => $scd->{url},
+        riap_uri        => undef,
+        riap_client     => $self->riap_client,
+        extras          => {r=>$r, cmdline=>$self},
+        func_arg_starts_at => ($subcommand_name_from eq 'arg' ? 1:0),
+        completion      => sub {
+            my %args = @_;
+            my $type = $args{type};
+
+            # user specifies custom completion routine, so use that first
+            if ($self->completion) {
+                my $res = $self->completion(%args);
+                return $res if $res;
+            }
+            # if subcommand name has not been supplied and we're at arg#0,
+            # complete subcommand name
+            if ($self->subcommands &&
+                    $subcommand_name_from ne '--cmd' &&
+                         $type eq 'arg' && $args{argpos}==0) {
+                require Complete::Util;
+                my $subcommands    = $self->list_subcommands;
+                my @subc_names     = keys %$subcommands;
+                my @subc_summaries = map { $subcommands->{$_}{summary} }
+                    @subc_names;
+                return Complete::Util::complete_array_elem(
+                    array     => \@subc_names,
+                    summaries => \@subc_summaries,
+                    word      => $words->[$cword]);
+            }
+
+            # otherwise let periscomp do its thing
+            return undef;
+        },
+    );
+
+    my $formatted;
+    if ($r->{shell} eq 'bash') {
+        require Complete::Bash;
+        $formatted = Complete::Bash::format_completion(
+            $compres, {word=>$words->[$cword]});
+    } elsif ($r->{shell} eq 'fish') {
+        require Complete::Fish;
+        $formatted = Complete::Fish::format_completion($compres);
+    } elsif ($r->{shell} eq 'tcsh') {
+        require Complete::Tcsh;
+        $formatted = Complete::Tcsh::format_completion($compres);
+    } elsif ($r->{shell} eq 'zsh') {
+        require Complete::Zsh;
+        $formatted = Complete::Zsh::format_completion($compres);
+    }
+
+    # to properly display unicode filenames
+    $self->use_utf8(1);
+
+    [200, "OK", $formatted,
+     # these extra result are for debugging
+     {
+         "func.words" => $words,
+         "func.cword" => $cword,
+         "cmdline.skip_format" => 1,
+     }];
 }
 
 sub _read_config {
@@ -2541,10 +2659,6 @@ from command-line options like C<--log-level>, C<--trace>, etc.
 The main method to run your application. See L</"PROGRAM FLOW (NORMAL)"> for
 more details on what this method does.
 
-=head2 $cmd->do_dump() => ENVRES
-
-Called by run().
-
 =head2 $cmd->do_completion() => ENVRES
 
 Called by run().
@@ -2555,8 +2669,7 @@ Called by run().
 
 =head2 $cmd->get_meta($r, $url) => ENVRES
 
-Called by parse_argv() or do_dump() or do_completion(). Subclass has to
-implement this.
+Called by parse_argv() or do_completion(). Subclass has to implement this.
 
 
 =head1 HOOKS
@@ -2800,41 +2913,6 @@ C<cmdline.page_result> result metadata is active). Can also be set to C<''> or
 C<0> to explicitly disable paging even though C<cmd.page_result> result metadata
 is active.
 
-=head2 PERINCI_CMDLINE_DUMP_ARGS
-
-Boolean. If set to true, instead of running normal action, will instead dump
-arguments that will be passed to function, (after merge with values from
-environment/config files, and validation/coercion), in Perl format (using
-L<Data::Dump>) and exit.
-
-Useful for debugging or information extraction.
-
-=head2 PERINCI_CMDLINE_DUMP_CONFIG
-
-Boolean. If set to true, instead of running normal action, will dump
-configuration that is using C<read_config()>, in Perl format (using
-L<Data::Dump>) and exit.
-
-Useful for debugging or information extraction.
-
-=head2 PERINCI_CMDLINE_DUMP_OBJECT
-
-String. Default undef. If set to a true value, instead of running normal action,
-will dump Perinci::CmdLine object at the start of run() in Perl format (using
-L<Data::Dump>) and exit. Useful to get object's attributes and reconstruct the
-object later. Used in, e.g. L<App::shcompgen> to generate an appropriate
-completion script for the CLI, or L<Pod::Weaver::Plugin::Rinci> to generate POD
-documentation about the script. See also L<Perinci::CmdLine::Dump>.
-
-The value of the this variable will be used as the label in the dump delimiter,
-.e.g:
-
- # BEGIN DUMP foo
- ...
- # END DUMP foo
-
-Useful for debugging or information extraction.
-
 =head2 PERINCI_CMDLINE_OUTPUT_DIR
 
 String. If set, then aside from displaying output as usual, the unformatted
@@ -2859,22 +2937,17 @@ result.
 
 =head2 PERINCI_CMDLINE_PLUGINS
 
-String. A list of plugins to load at the start of program. Format:
+String. A list of plugins to load at the start of program. If it begins with a
+C>[> (opening square bracket), it will be assumed to be in JSON encoding:
+
+ ["PluginName1",{"arg1name":"arg1val","arg2name":"arg2val",...},"PluginName2", ...]
+
+otherwise it is assumed to be a comma-separated string in this syntax:
 
  -PluginName1,arg1name,arg1val,arg2name,arg2val,...,-PluginName2,...
 
 Plugin name is module name without the C<Perinci::CmdLine::Plugin::> prefix. The
 argument list can be skipped if you don't want to pass arguments to a plugin.
-
-=head2 PERINCI_CMDLINE_PLUGINS_JSON
-
-String. Like L</PERINCI_CMDLINE_PLUGINS> but assumed to be in JSON encoding, to
-be able to encode data structure (for complex arguments). Syntax:
-
- ["PluginName1",{"arg1name":"arg1val","arg2name":"arg2val",...},"PluginName2", ...]
-
-Plugin name is module name without the C<Perinci::CmdLine::Plugin::> prefix. The
-hash can be skipped if you don't want to pass arguments to a plugin.
 
 =head2 PERINCI_CMDLINE_PROGRAM_NAME
 
