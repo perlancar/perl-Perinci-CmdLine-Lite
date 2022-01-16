@@ -33,6 +33,10 @@
 	- [incompatible change] Remove support for PERINCI_CMDLINE_DUMP_ARGS &
           PERINCI_CMDLINE_DUMP_CONFIG.
 
+        - [incompatible change] Remove support for the deprecated
+          PERINCI_CMDLINE_DUMP; only PERINCI_CMDLINE_DUMP_OBJECT is supported.
+          See the plugin Run::DumpObject.
+
 
 1.914   2021-12-10  Released-By: PERLANCAR; Urgency: medium
 
