@@ -1,3 +1,9 @@
+1.917   2022-01-29  Released-By: PERLANCAR; Urgency: medium
+
+	- Bump prereq versions (particularly, Perinci::Sub::GetArgs::Argv
+	  to 0.846 to adjust with newest Data::Sah::Resolve.
+
+
 1.916   2021-12-11  Released-By: PERLANCAR; Urgency: medium
 
 	- [bugfix] Forgot to adjust method call.
