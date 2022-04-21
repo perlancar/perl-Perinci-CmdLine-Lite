@@ -1,3 +1,9 @@
+1.919   2022-04-21  Released-By: PERLANCAR; Urgency: medium
+
+        - Move dependeny PerlIO::locale from RuntimeRequires to
+          RuntimeRecommends to work around installation problem on Windows.
+
+
 1.918   2022-04-15  Released-By: PERLANCAR; Urgency: medium
 
         - Add basic support for --format=vd. This is currently the most basic
