@@ -1650,7 +1650,14 @@ sub select_output_handle {
             }
 
             my $viewer = $r->{viewer} // $resmeta->{"cmdline.viewer"} //
-                $default_viewer // $ENV{VIEWER} // $ENV{BROWSER};
+                $default_viewer // $ENV{VIEWER} // $ENV{BROWSER} // do {
+                    if ($^O eq 'MSWin32') {
+                        require Browser::Find::Windows;
+                        Browser::Find::Windows::find_browser();
+                    } else {
+                        undef;
+                    }
+                };
             last if defined $viewer && !$viewer; # ENV{VIEWER} can be set 0/'' to disable viewing result using external program
             die [500, "No VIEWER program set"] unless defined $viewer;
             $r->{viewer} = $viewer;
