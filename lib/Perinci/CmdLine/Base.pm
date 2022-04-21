@@ -1825,7 +1825,7 @@ sub display_result {
         print $handle $fres;
         if (defined $r->{viewer}) {
             require ShellQuote::Any::Tiny;
-            my $cmd = $r->{viewer} ." ". ShellQuote::Any::Tiny::shell_quote($r->{viewer_temp_path});
+            my $cmd = ShellQuote::Any::Tiny::shell_quote($r->{viewer}) ." ". ShellQuote::Any::Tiny::shell_quote($r->{viewer_temp_path});
             system $cmd;
         }
     }
