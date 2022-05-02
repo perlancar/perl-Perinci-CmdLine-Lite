@@ -46,7 +46,7 @@ sub after_action {
 
 To use, either specify in environment variable:
 
- PERINCI_CMDLINE_PLUGINS=-Control::Exit
+ PERINCI_CMDLINE_PLUGINS=-Flow::Exit
 
 or in code instantiating L<Perinci::CmdLine>:
 
