@@ -394,6 +394,18 @@ _
     log_level => {
         getopt  => 'log-level=s',
         summary => 'Set log level',
+        description => <<'_',
+
+By default, these log levels are available (in order of increasing level of
+importance, from least important to most): `trace`, `debug`, `info`,
+`warn`/`warning`, `error`, `fatal`. By default, the level is usually set to
+`warn`, which means that log statements with level `info` and less important
+levels will not be shown. To increase verbosity, choose `info`, `debug`, or
+`fatal`.
+
+For more details on log level and logging, see <pm:Log::ger>.
+
+_
         schema  => ['str*' => in => [
             qw/trace debug info warn warning error fatal/]],
         value_label=>'level',
