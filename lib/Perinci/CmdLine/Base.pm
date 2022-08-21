@@ -464,7 +464,7 @@ importance, from least important to most): `trace`, `debug`, `info`,
 `warn`/`warning`, `error`, `fatal`. By default, the level is usually set to
 `warn`, which means that log statements with level `info` and less important
 levels will not be shown. To increase verbosity, choose `info`, `debug`, or
-`fatal`.
+`trace`.
 
 For more details on log level and logging, as well as how new logging levels can
 be defined or existing ones modified, see <pm:Log::ger>.
