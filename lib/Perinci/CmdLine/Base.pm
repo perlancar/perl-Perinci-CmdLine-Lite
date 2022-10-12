@@ -151,7 +151,10 @@ our %copts = (
     version => {
         getopt  => "version|v",
         summary => "Display program's version and exit",
+        # XXX when option is changed, we need to update this. we should generate
+        # usage automatically instead.
         usage   => "--version (or -v)",
+        'usage.alt.fmt.pod' => qq{L<--version|/"--version, -v"> (or L<-v|/"--version, -v">)},
         handler => sub {
             my ($go, $val, $r) = @_;
             $r->{action} = 'version';
@@ -163,7 +166,10 @@ our %copts = (
     help => {
         getopt  => 'help|h|?',
         summary => 'Display help message and exit',
+        # XXX when option is changed, we need to update this. we should generate
+        # usage automatically instead.
         usage   => "--help (or -h, -?)",
+        'usage.alt.fmt.pod' => qq{L<--help|/"--help, -h, -v"> (or L<-h|/"--help, -h, -v">, L<-?|/"--help, -h, -v">)},
         handler => sub {
             my ($go, $val, $r) = @_;
             $r->{action} = 'help';
@@ -275,7 +281,10 @@ _
     subcommands => {
         getopt  => 'subcommands',
         summary => 'List available subcommands',
+        # XXX when option is changed, we need to update this. we should generate
+        # usage automatically instead.
         usage   => "--subcommands",
+        'usage.alt.fmt.pod' => qq{L<--subcommands|/"--subcommands">},
         show_in_usage => sub {
             my ($self, $r) = @_;
             !$r->{subcommand_name};
