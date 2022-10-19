@@ -541,9 +541,10 @@ sub BUILD {
 
     push @CmdLine_Instances, $self;
     if (@CmdLine_Instances > 1) {
-        warn "Multiple cmdline instances in a process can be problematic because plugins installed as handlers ".
-            "retain the cmdline object with which they were instantiated with. Please make sure you know what ".
-            "you are doing with multiple cmdline objects.";
+        warn "Multiple cmdline instances in a process can be problematic ".
+            "because plugins installed as handlers retain the cmdline object ".
+            "with which they were instantiated with. Please make sure you ".
+            "know what you are doing with multiple cmdline objects.";
     }
 
     $self->{plugins} //= [];
