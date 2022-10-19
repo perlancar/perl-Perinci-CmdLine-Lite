@@ -1,3 +1,8 @@
+1.925   2022-10-19  Released-By: PERLANCAR; Urgency: medium
+
+        - Warn multiple cmdline instances in a single process.
+
+
 1.924   2022-10-19  Released-By: PERLANCAR; Urgency: medium
 
         - Bump prereq Perinci::CmdLine::Util::Config to 1.725 (RT#138237).
