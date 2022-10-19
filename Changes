@@ -1,3 +1,8 @@
+1.924   2022-10-19  Released-By: PERLANCAR; Urgency: medium
+
+        - Bump prereq Perinci::CmdLine::Util::Config to 1.725 (RT#138237).
+
+
 1.923   2022-10-19  Released-By: PERLANCAR; Urgency: medium
 
         - [ux] Turn off marking of different language in help message because
