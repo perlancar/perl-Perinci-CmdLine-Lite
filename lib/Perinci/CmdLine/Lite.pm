@@ -602,6 +602,7 @@ sub action_help {
         common_opts => $common_opts,
         per_arg_json => $self->per_arg_json,
         per_arg_yaml => $self->per_arg_yaml,
+        mark_different_lang => 0,
     );
 
     $res->[3]{"cmdline.skip_format"} = 1;
