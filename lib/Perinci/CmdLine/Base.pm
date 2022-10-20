@@ -169,7 +169,7 @@ our %copts = (
         # XXX when option is changed, we need to update this. we should generate
         # usage automatically instead.
         usage   => "--help (or -h, -?)",
-        'usage.alt.fmt.pod' => qq{L<--help|/"--help, -h, -v"> (or L<-h|/"--help, -h, -v">, L<-?|/"--help, -h, -v">)},
+        'usage.alt.fmt.pod' => qq{L<--help|/"--help, -h, -?"> (or L<-h|/"--help, -h, -?">, L<-?|/"--help, -h, -?">)},
         handler => sub {
             my ($go, $val, $r) = @_;
             $r->{action} = 'help';
