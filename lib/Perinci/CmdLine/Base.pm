@@ -154,7 +154,7 @@ our %copts = (
         # XXX when option is changed, we need to update this. we should generate
         # usage automatically instead.
         usage   => "--version (or -v)",
-        'usage.alt.fmt.pod' => qq{L<--version|/"--version, -v"> (or L<-v|/"--version, -v">)},
+        'usage.alt.fmt.pod' => qq{B<L<--version|/"--version, -v">> (or B<L<-v|/"--version, -v">>)},
         handler => sub {
             my ($go, $val, $r) = @_;
             $r->{action} = 'version';
@@ -169,7 +169,7 @@ our %copts = (
         # XXX when option is changed, we need to update this. we should generate
         # usage automatically instead.
         usage   => "--help (or -h, -?)",
-        'usage.alt.fmt.pod' => qq{L<--help|/"--help, -h, -?"> (or L<-h|/"--help, -h, -?">, L<-?|/"--help, -h, -?">)},
+        'usage.alt.fmt.pod' => qq{B<L<--help|/"--help, -h, -?">> (or B<L<-h|/"--help, -h, -?">>, B<L<-?|/"--help, -h, -?">>)},
         handler => sub {
             my ($go, $val, $r) = @_;
             $r->{action} = 'help';
@@ -284,7 +284,7 @@ _
         # XXX when option is changed, we need to update this. we should generate
         # usage automatically instead.
         usage   => "--subcommands",
-        'usage.alt.fmt.pod' => qq{L<--subcommands|/"--subcommands">},
+        'usage.alt.fmt.pod' => qq{B<L<--subcommands|/"--subcommands">>},
         show_in_usage => sub {
             my ($self, $r) = @_;
             !$r->{subcommand_name};
