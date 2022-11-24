@@ -1782,7 +1782,7 @@ sub select_output_handle {
             ## no critic (InputOutput::RequireBriefOpen)
             open $handle, "|-", $pager;
         }
-        $handle //= \*STDOUT;
+        $handle //= $r->{res}[0] >= 400 ? \*STDERR : \*STDOUT;
     }
     $r->{output_handle} = $handle;
 }
