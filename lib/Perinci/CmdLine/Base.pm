@@ -884,7 +884,7 @@ sub get_subcommand_data {
     return undef unless $scs;
 
     if (ref($scs) eq 'CODE') {
-        return $scs->($self, name=>$name);
+        return $scs->($self, name=>$name, in_completion=>$r->{in_completion});
     } else {
         return $scs->{$name};
     }
@@ -898,7 +898,7 @@ sub list_subcommands {
     my $res;
     if ($scs) {
         if (ref($scs) eq 'CODE') {
-            $scs = $scs->($self);
+            $scs = $scs->($self, in_completion=>$r->{in_completion});
             die [500, "BUG: Subcommands code didn't return a hashref"]
                 unless ref($scs) eq 'HASH';
         }
