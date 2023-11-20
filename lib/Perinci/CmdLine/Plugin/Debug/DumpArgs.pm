@@ -18,17 +18,28 @@ sub meta {
     return {
         summary => 'Dump command-line arguments ($r->{args}), by default after argument validation',
         conf => {
+            dumper => {
+                schema => ['str*', in=>['Data::Dump::Color', 'Data::Dmp']],
+                default => 'Data::Dump::Color',
+            },
         },
         tags => ['category:debugging'],
     };
 }
 
 sub after_validate_args {
-    require Data::Dump::Color;
-
     my ($self, $r) = @_;
 
-    Data::Dump::Color::dd($r->{args});
+    my $dumper = $self->{dumper} || 'Data::Dump::Color';
+    if ($dumper eq 'Data::Dmp') {
+        require Data::Dmp;
+        local $Data::Dmp::OPT_DEPARSE = 1;
+        Data::Dmp::dd($r->{args});
+    } else {
+        require Data::Dump::Color;
+        Data::Dump::Color::dd($r->{args});
+    }
+
     [200, "OK"];
 }
 

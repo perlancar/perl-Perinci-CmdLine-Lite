@@ -18,17 +18,28 @@ sub meta {
     return {
         summary => 'Dump request stash ($r), by default after action',
         conf => {
+            dumper => {
+                schema => ['str*', in=>['Data::Dump::Color', 'Data::Dmp']],
+                default => 'Data::Dump::Color',
+            },
         },
         tags => ['category:debugging'],
     };
 }
 
 sub after_action {
-    require Data::Dump::Color;
-
     my ($self, $r) = @_;
 
-    Data::Dump::Color::dd($r);
+    my $dumper = $self->{dumper} || 'Data::Dump::Color';
+    if ($dumper eq 'Data::Dmp') {
+        require Data::Dmp;
+        local $Data::Dmp::OPT_DEPARSE = 1;
+        Data::Dmp::dd($r);
+    } else {
+        require Data::Dump::Color;
+        Data::Dump::Color::dd($r);
+    }
+
     [200, "OK"];
 }
 
