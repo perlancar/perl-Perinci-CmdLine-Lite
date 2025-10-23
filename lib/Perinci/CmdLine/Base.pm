@@ -149,12 +149,12 @@ has plugins => (
 our %copts = (
 
     version => {
-        getopt  => "version|v",
+        getopt  => "version",
         summary => "Display program's version and exit",
         # XXX when option is changed, we need to update this. we should generate
         # usage automatically instead.
-        usage   => "--version (or -v)",
-        'usage.alt.fmt.pod' => qq{B<L<--version|/"--version, -v">> (or B<L<-v|/"--version, -v">>)},
+        usage   => "--version",
+        'usage.alt.fmt.pod' => qq{B<L<--version|/"--version">>},
         handler => sub {
             my ($go, $val, $r) = @_;
             $r->{action} = 'version';
@@ -164,12 +164,12 @@ our %copts = (
     },
 
     help => {
-        getopt  => 'help|h|?',
+        getopt  => 'help',
         summary => 'Display help message and exit',
         # XXX when option is changed, we need to update this. we should generate
         # usage automatically instead.
-        usage   => "--help (or -h, -?)",
-        'usage.alt.fmt.pod' => qq{B<L<--help|/"--help, -h, -?">> (or B<L<-h|/"--help, -h, -?">>, B<L<-?|/"--help, -h, -?">>)},
+        usage   => "--help",
+        'usage.alt.fmt.pod' => qq{B<L<--help|/"--help">>},
         handler => sub {
             my ($go, $val, $r) = @_;
             $r->{action} = 'help';

@@ -167,12 +167,16 @@ sub hook_before_parse_argv {
         per_arg_yaml       => $self->{per_arg_yaml},
     );
 
+    my $meta_uses_opt_h = 0;
+    my $meta_uses_opt_v = 0;
     my $meta_uses_opt_P = 0;
     my $meta_uses_opt_c = 0;
     my $meta_uses_opt_C = 0;
     {
         last unless $ggls_res->[0] == 200;
         my $opts = $ggls_res->[3]{'func.opts'};
+        if (grep { $_ eq '-h' } @$opts) { $meta_uses_opt_h = 1 }
+        if (grep { $_ eq '-v' } @$opts) { $meta_uses_opt_v = 1 }
         if (grep { $_ eq '-P' } @$opts) { $meta_uses_opt_P = 1 }
         if (grep { $_ eq '-c' } @$opts) { $meta_uses_opt_c = 1 }
         if (grep { $_ eq '-C' } @$opts) { $meta_uses_opt_C = 1 }
@@ -181,6 +185,16 @@ sub hook_before_parse_argv {
     #say "D:meta_uses_opt_P=<$meta_uses_opt_P>";
     #say "D:meta_uses_opt_c=<$meta_uses_opt_c>";
     #say "D:meta_uses_opt_C=<$meta_uses_opt_C>";
+
+    # add -h shortcut for --help if no conflict
+    if ($copts->{help} && !$meta_uses_opt_h) {
+        $copts->{help}{getopt} = 'help|h';
+    }
+
+    # add -v shortcut for --version if no conflict
+    if ($copts->{version} && !$meta_uses_opt_v) {
+        $copts->{version}{getopt} = 'version|v';
+    }
 
     # add -P shortcut for --config-profile if no conflict
     if ($copts->{config_profile} && !$meta_uses_opt_P) {
@@ -192,7 +206,7 @@ sub hook_before_parse_argv {
         $copts->{config_path}{getopt} = 'config-path|c=s';
     }
 
-    # add -P shortcut for --no-config if no conflict
+    # add -C shortcut for --no-config if no conflict
     if ($copts->{no_config} && !$meta_uses_opt_C) {
         $copts->{no_config}{getopt} = 'no-config|C';
     }
