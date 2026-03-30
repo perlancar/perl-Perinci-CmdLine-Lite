@@ -949,129 +949,6 @@ sub _read_env {
     \@words;
 }
 
-sub do_completion {
-    my ($self, $r) = @_;
-
-    local $r->{in_completion} = 1;
-
-    my ($words, $cword);
-    if ($r->{shell} eq 'bash') {
-        require Complete::Bash;
-        require Encode;
-        ($words, $cword) = @{ Complete::Bash::parse_cmdline(undef, undef, {truncate_current_word=>1}) };
-        ($words, $cword) = @{ Complete::Bash::join_wordbreak_words($words, $cword) };
-        $words = [map {Encode::decode('UTF-8', $_)} @$words];
-    } elsif ($r->{shell} eq 'fish') {
-        require Complete::Bash;
-        ($words, $cword) = @{ Complete::Bash::parse_cmdline() };
-    } elsif ($r->{shell} eq 'tcsh') {
-        require Complete::Tcsh;
-        ($words, $cword) = @{ Complete::Tcsh::parse_cmdline() };
-    } elsif ($r->{shell} eq 'zsh') {
-        require Complete::Bash;
-        ($words, $cword) = @{ Complete::Bash::parse_cmdline() };
-    } else {
-        die "Unsupported shell '$r->{shell}'";
-    }
-
-    shift @$words; $cword--; # strip program name
-
-    # @ARGV given by bash is messed up / different. during completion, we
-    # get ARGV from parsing COMP_LINE/COMP_POINT.
-    @ARGV = @$words;
-
-    # check whether subcommand is defined. try to search from --cmd, first
-    # command-line argument, or default_subcommand.
-    $self->hook_before_parse_argv($r);
-    $self->_parse_argv1($r);
-
-    if ($r->{read_env}) {
-        my $env_words = $self->_read_env($r);
-        unshift @ARGV, @$env_words;
-        $cword += @$env_words;
-    }
-
-    #log_trace("ARGV=%s", \@ARGV);
-    #log_trace("words=%s", $words);
-
-    # force format to text for completion, because user might type 'cmd --format
-    # blah -^'.
-    $r->{format} = 'text';
-
-    my $scd = $r->{subcommand_data};
-    my $meta = $self->get_meta($r, $scd->{url} // $self->{url});
-
-    my $subcommand_name_from = $r->{subcommand_name_from} // '';
-
-    require Perinci::Sub::Complete;
-    my $compres = Perinci::Sub::Complete::complete_cli_arg(
-        meta            => $meta, # must be normalized
-        words           => $words,
-        cword           => $cword,
-        common_opts     => $self->common_opts,
-        riap_server_url => $scd->{url},
-        riap_uri        => undef,
-        riap_client     => $self->riap_client,
-        extras          => {r=>$r, cmdline=>$self},
-        func_arg_starts_at => ($subcommand_name_from eq 'arg' ? 1:0),
-        completion      => sub {
-            my %args = @_;
-            my $type = $args{type};
-
-            # user specifies custom completion routine, so use that first
-            if ($self->completion) {
-                my $res = $self->completion(%args);
-                return $res if $res;
-            }
-            # if subcommand name has not been supplied and we're at arg#0,
-            # complete subcommand name
-            if ($self->subcommands &&
-                    $subcommand_name_from ne '--cmd' &&
-                         $type eq 'arg' && $args{argpos}==0) {
-                require Complete::Util;
-                my $subcommands    = $self->list_subcommands;
-                my @subc_names     = keys %$subcommands;
-                my @subc_summaries = map { $subcommands->{$_}{summary} }
-                    @subc_names;
-                return Complete::Util::complete_array_elem(
-                    array     => \@subc_names,
-                    summaries => \@subc_summaries,
-                    word      => $words->[$cword]);
-            }
-
-            # otherwise let periscomp do its thing
-            return undef;
-        },
-    );
-
-    my $formatted;
-    if ($r->{shell} eq 'bash') {
-        require Complete::Bash;
-        $formatted = Complete::Bash::format_completion(
-            $compres, {word=>$words->[$cword]});
-    } elsif ($r->{shell} eq 'fish') {
-        require Complete::Fish;
-        $formatted = Complete::Fish::format_completion($compres);
-    } elsif ($r->{shell} eq 'tcsh') {
-        require Complete::Tcsh;
-        $formatted = Complete::Tcsh::format_completion($compres);
-    } elsif ($r->{shell} eq 'zsh') {
-        require Complete::Zsh;
-        $formatted = Complete::Zsh::format_completion($compres);
-    }
-
-    # to properly display unicode filenames
-    $self->use_utf8(1);
-
-    [200, "OK", $formatted,
-     # these extra result are for debugging
-     {
-         "func.words" => $words,
-         "func.cword" => $cword,
-         "cmdline.skip_format" => 1,
-     }];
-}
-
 sub _read_config {
     require Perinci::CmdLine::Util::Config;
 
@@ -2758,12 +2635,9 @@ from command-line options like C<--log-level>, C<--trace>, etc.
 
 =head2 $cmd->run() => ENVRES
 
-The main method to run your application. See L</"PROGRAM FLOW (NORMAL)"> for
-more details on what this method does.
-
-=head2 $cmd->do_completion() => ENVRES
-
-Called by run().
+The main method to run your application. Actually calls one of the Run::
+plugins. See L</"PROGRAM FLOW (NORMAL)"> for more details on what this method
+does.
 
 =head2 $cmd->parse_argv() => ENVRES
 
@@ -2771,7 +2645,8 @@ Called by run().
 
 =head2 $cmd->get_meta($r, $url) => ENVRES
 
-Called by parse_argv() or do_completion(). Subclass has to implement this.
+Called by parse_argv() or completion plugin's run(). Subclass has to implement
+this.
 
 
 =head1 HOOKS

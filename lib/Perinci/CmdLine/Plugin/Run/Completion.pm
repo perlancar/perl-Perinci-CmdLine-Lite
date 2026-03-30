@@ -33,7 +33,6 @@ _
 sub on_run {
     my ($self, $r) = @_;
 
-    # completion is special case, we delegate to do_completion()
     return [100] unless $self->cmdline->_detect_completion($r);
 
     local $r->{in_completion} = 1;
